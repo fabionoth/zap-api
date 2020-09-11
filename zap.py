@@ -1,6 +1,6 @@
-
 from zapv2 import ZAPv2
 from pprint import pprint
+from database import Database
 import sqlite3
 import time
 import sys
@@ -8,67 +8,96 @@ import re
 import time
 
 
-conn = sqlite3.connect('running.db')
-c = conn.cursor()
-# Create table
-c.execute('''CREATE TABLE IF NOT EXISTS running (id integer primary key autoincrement, app text, status text)''')
-conn.commit()
 
-if len(sys.argv) is not 2:
-    print('Too short arguments.')
-    sys.exit(1)
-target = sys.argv[1]
-name = 'report_{}.{}'.format(target.replace(
-    'http://', '').replace('https://', '').replace('/', ''), time.time())
-print("generating report {}".format(name))
-query = u"INSERT INTO running (app, status) VALUES(?,?)"
-print(query)
-c.execute(query, (name, ''))
-conn.commit()
+class Zap:
+    ZAP_URL_HTTP = 'http://localhost:8080'
+    API_KEY = 'SupriseMotherFucker'
+    
 
+    def __init__(self, target, debug=False):
+        self.__debug = debug
+        self.__target = target
 
-zap = ZAPv2(proxies={'http': 'http://localhost:8080'},
-            apikey="SupriseMotherFucker")
-zap.urlopen(target)
-scanid = zap.spider.scan(target)
-time.sleep(2)
+        if not self.__is_valid_url(target):
+            raise Exception("Not valid url")
+        self.__name = 'report_{}.{}'.format(self.__target.replace(
+            'http://', '').replace('https://', '').replace('/', ''), time.time())
 
+        if self.__debug:
+            print("DEBUG: target -> {}".format(self.__target))
+            print("DEBUG: name -> {}".format(self.__name))
 
-print('Spidering target %s' % name)
-while (int(zap.spider.status(scanid)) < 100):
-    status = u"Spider progress: {}% ".format(zap.spider.status(scanid))
-    print(status)
-    c.execute("UPDATE running SET status = ? WHERE app like ?", (status, name))
-    conn.commit()
-    print(status)
+    def run(self):
+        zap = ZAPv2(proxies={'http': self.ZAP_URL_HTTP}, apikey=self.API_KEY)
+        zap.urlopen(self.__target)
+        status = "Starting Analysys: target -> {}".format(self.__target)
+        self.__update_database_status(status)
+        if self.__debug:
+            print(status)
+        self.__spider(zap)
+        self.__scanning(zap)
+        self.__generate_report(zap)
 
-    time.sleep(2)
-print('Spider completed')
+    def __spider(self, zap):
+        scanid = zap.spider.scan(self.__target)
+        status = "Spidering: target -> {}".format(self.__target)
+        if self.__debug:
+            print(status)
+        
+        self.__update_database_status(status)
+        time.sleep(2)
 
-# Give the passive scanner a chance to finish
-time.sleep(5)
+        while(int(zap.spider.status(scanid)) < 100):
+            status = u"Spider progress: {}% ".format(zap.spider.status(scanid))
+            if self.__debug:
+                print(status)
+            self.__update_database_status(status)
+            time.sleep(5)
 
+    def __scanning(self, zap):
+        scanid = zap.ascan.scan(self.__target)
+        status = "Scanning: target -> {}".format(self.__target)
+        self.__update_database_status(status)
+        time.sleep(2)
+        if self.__debug:
+            print(status)
+        
+        while (int(zap.ascan.status(scanid)) < 100):
+            status = 'Scan Progress progress %:{} '.format(zap.ascan.status(scanid))
+            self.__update_database_status(status)
+            if self.__debug:
+                print(status)
+            time.sleep(5)
 
-print('Scanning target %s' % name)
-scanid = zap.ascan.scan(target)
-while (int(zap.ascan.status(scanid)) < 100):
-    status = 'Scan progress %:{} '.format(zap.ascan.status(scanid))
-    c.execute("UPDATE running SET status = ? WHERE app like ?", (status, name))
-    conn.commit()
+    def __generate_report(self, zap):
+        pprint(zap.core.alerts())
+        html = zap.core.htmlreport()
+        with open('templates/reports/' + self.__name + '.html', 'a') as f:
+            f.write(html)
+        self.__update_database_status("Report done")
 
-    print(status)
-    time.sleep(5)
+        
 
+    def __update_database_status(self, status):
+        d = Database(debug=self.__debug)
+        d.update_status(name = self.__name, status=status)
+        d.__exit__()
 
-print('Hosts: ' + ', '.join(zap.core.hosts))
-pprint(zap.core.alerts())
-html = zap.core.htmlreport()
-with open('templates/reports/' + name + '.html', 'a') as f:
-    f.write(html)
+    @property
+    def name(self):
+        return self.__name
 
+    @property
+    def target(self):
+        return self.__target
 
-status = "Scan completed"
-c.execute("UPDATE running SET status = ? WHERE app like ?", (status, name))
-conn.commit()
-conn.close()
-print(status)  # Report the results
+    def __is_valid_url(self, url):
+        regex = re.compile(
+            r'^(?:http|ftp)s?://'  # http:// or https://
+            # domain...
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        return re.match(regex, url)
