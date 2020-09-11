@@ -1,4 +1,5 @@
 from flask import Flask,request,render_template, redirect
+from zap import Zap
 import os
 import sqlite3
 app = Flask(__name__)
@@ -17,11 +18,7 @@ def index():
 @app.route('/api')
 def analyze():
     host = request.args.get('host')
-    bash = """
-       ../venv/bin/python3 ../zap.py {} &        
-    """.format(host)
-    print(bash)
-    os.system(bash)
+    zap = Zap(host, debug=True)
     return redirect('/reports')
 
 @app.route('/reports')
