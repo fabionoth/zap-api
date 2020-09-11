@@ -8,11 +8,11 @@ import re
 import time
 
 
-ZAP_URL_HTTP = 'http://localhost:8080'
-API_KEY = 'SupriseMotherFucker'
-
 
 class Zap:
+    ZAP_URL_HTTP = 'http://localhost:8080'
+    API_KEY = 'SupriseMotherFucker'
+    
 
     def __init__(self, target, debug=False):
         self.__debug = debug
@@ -28,7 +28,7 @@ class Zap:
             print("DEBUG: name -> {}".format(self.__name))
 
     def run(self):
-        zap = ZAPv2(proxies={'http': ZAP_URL}, apikey=API_KEY)
+        zap = ZAPv2(proxies={'http': self.ZAP_URL_HTTP}, apikey=self.API_KEY)
         zap.urlopen(self.__target)
         status = "Starting Analysys: target -> {}".format(self.__target)
         self.__update_database_status(status)
@@ -36,6 +36,7 @@ class Zap:
             print(status)
         self.__spider(zap)
         self.__scanning(zap)
+        self.__generate_report(zap)
 
     def __spider(self, zap):
         scanid = zap.spider.scan(self.__target)
@@ -54,7 +55,7 @@ class Zap:
             time.sleep(5)
 
     def __scanning(self, zap):
-        scanid = zap.ascan.scan(target)
+        scanid = zap.ascan.scan(self.__target)
         status = "Scanning: target -> {}".format(self.__target)
         self.__update_database_status(status)
         time.sleep(2)
@@ -67,9 +68,17 @@ class Zap:
             if self.__debug:
                 print(status)
             time.sleep(5)
+
+    def __generate_report(self, zap):
+        pprint(zap.core.alerts())
+        html = zap.core.htmlreport()
+        with open('templates/reports/' + self.__name + '.html', 'a') as f:
+            f.write(html)
+        self.__update_database_status("Report done")
+
         
 
-    def __update_database_status(status):
+    def __update_database_status(self, status):
         d = Database(debug=self.__debug)
         d.update_status(name = self.__name, status=status)
         d.__exit__()

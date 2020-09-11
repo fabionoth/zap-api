@@ -1,7 +1,9 @@
 from flask import Flask,request,render_template, redirect
+from multiprocessing import Process
 from zap import Zap
-import os
+
 import sqlite3
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -19,6 +21,9 @@ def index():
 def analyze():
     host = request.args.get('host')
     zap = Zap(host, debug=True)
+    p = Process(target=zap.run())
+    p.start()
+    #p.join()
     return redirect('/reports')
 
 @app.route('/reports')
