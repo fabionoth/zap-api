@@ -10,7 +10,7 @@ import time
 
 
 class Zap:
-    ZAP_URL_HTTP = 'http://localhost:8080'
+    ZAP_URL_HTTP = 'http://zap:8080'
     API_KEY = 'SupriseMotherFucker'
     
 
