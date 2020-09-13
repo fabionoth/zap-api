@@ -1,6 +1,7 @@
 from zapv2 import ZAPv2
 from pprint import pprint
 from database import Database
+import argparse
 import sqlite3
 import time
 import sys
@@ -101,3 +102,13 @@ class Zap:
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
         return re.match(regex, url)
+    
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-u", "--url", help="url to execute spider/crawler/scan", type=str)
+    parser.add_argument("--debug", action="store_true", help="debug data", default=False)
+    url = parser.parse_args().url
+    debug = parser.parse_args().debug
+    zap = Zap(url, debug)
+    zap.run()

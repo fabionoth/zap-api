@@ -1,6 +1,6 @@
 from flask import Flask,request,render_template, redirect
-from multiprocessing import Process
-from zap import Zap
+import subprocess
+
 
 import sqlite3
 
@@ -20,10 +20,8 @@ def index():
 @app.route('/api')
 def analyze():
     host = request.args.get('host')
-    zap = Zap(host, debug=True)
-    p = Process(target=zap.run())
-    p.start()
-    #p.join()
+    command = (['python', 'zap.py', '--url', host])
+    subprocess.Popen(command)
     return redirect('/reports')
 
 @app.route('/reports')
@@ -43,5 +41,5 @@ def reports():
     return data
     
 
-app.run(debug=True)
+app.run()
 
