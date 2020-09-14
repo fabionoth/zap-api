@@ -2,8 +2,6 @@ from flask import Flask,request,render_template, redirect
 from database import Database
 import subprocess
 import json
-
-
 import sqlite3
 
 app = Flask(__name__)
