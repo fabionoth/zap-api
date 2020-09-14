@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<head>
+    <title>ZapAPI</title>
+</head>
+<body>
+    <h3>ZapAPI</h3>
+    Simple usage with <em>curl</em>: <br />
+    $curl <span class="local"></span>api?host=https://google.com<br />
+    $curl <span class="local"></span>reports<br />
+    $curl <span class="local"></span>reports?report=report_example_timestamp.html<br />
+    
+    <script>
+        /**
+        append location url in span class
+        **/
+        var spanTags = document.getElementsByClassName("local");
+        for (var i = 0; i < spanTags.length; i ++) {
+            spanTags[i].appendChild(document.createTextNode(window.location.href));
+        }
+    </script>
+</body>
+</html>

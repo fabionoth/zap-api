@@ -34,6 +34,11 @@ class Database:
         self.__conn.commit()
         if self.__debug:
             print("DEBUG: UPDATED STATUS \n APP:{} \n STATUS:{}".format(name, status))
+            
+    def get_reports(self):
+        c = self.__conn.cursor()
+        c.execute("SELECT app, status FROM running ORDER BY id DESC")
+        return c.fetchall()
 
     def __generate_initial_table(self):
         c = self.__conn.cursor()
