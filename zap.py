@@ -7,13 +7,13 @@ import time
 import sys
 import re
 import time
+import os
 
 
 
 class Zap:
     ZAP_URL_HTTP = 'http://zap:8080'
-    API_KEY = 'SupriseMotherFucker'
-    
+    API_KEY = os.environ['ZAP_APIKEY']
 
     def __init__(self, target, debug=False):
         self.__debug = debug

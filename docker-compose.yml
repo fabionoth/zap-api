@@ -1,16 +1,18 @@
-version: '3'
+version: "3"
 services:
   web:
     build: .
     ports:
       - "5000:5000"
-    networks: 
+    networks:
       - backend
+    environment:
+      - ZAP_APIKEY=${ZAP_APIKEY}
   zap:
     image: "owasp/zap2docker-stable"
     ports:
       - "8080:8080"
-    command: /bin/sh -c "zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=SupriseMotherFucker"
+    command: /bin/sh -c "zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true -config api.key=${ZAP_APIKEY}"
     networks:
       - backend
 networks:

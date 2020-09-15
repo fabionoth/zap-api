@@ -34,8 +34,8 @@ def reports():
         database.__exit__()
         for da in data:
             response['data'].append({
-                'app' : d['app'],
-                'status' : d['status'],
+                'app' : da[0],
+                'status' : da[1]
             })
         response = json.dumps(response)
         return response
