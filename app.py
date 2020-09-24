@@ -3,6 +3,7 @@ from database import Database
 import subprocess
 import json
 import sqlite3
+import shlex
 
 app = Flask(__name__)
 
@@ -13,7 +14,7 @@ def index():
 
 @app.route('/api')
 def analyze():
-    host = request.args.get('host')
+    host = shlex.quote(request.args.get('host'))
     command = (['python', 'zap.py', '--url', host])
     subprocess.Popen(command)
     response = { 'status':200 }
