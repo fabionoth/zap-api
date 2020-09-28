@@ -1,11 +1,11 @@
-from flask import Flask,request,render_template, redirect
+from flask import Flask, request, render_template, redirect
 from database import Database
 import subprocess
 import json
 import sqlite3
-import shlex
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
@@ -14,11 +14,12 @@ def index():
 
 @app.route('/api')
 def analyze():
-    host = shlex.quote(request.args.get('host'))
+    host = request.args.get('host')
     command = (['python', 'zap.py', '--url', host])
     subprocess.Popen(command)
-    response = { 'status':200 }
-    return json.dumps(response)
+    response = {'status': 200}
+    return json.dumps(response) , 200, {'Content-Type': 'application/json; charset=utf-8'}
+
 
 @app.route('/reports')
 def reports():
@@ -29,18 +30,17 @@ def reports():
         database = Database()
         data = database.get_reports()
         response = {
-            'status' : 200,
+            'status': 200,
             'data': []
         }
         database.__exit__()
         for da in data:
             response['data'].append({
-                'app' : da[0],
-                'status' : da[1]
+                'app': da[0] + '.html',
+                'status': da[1]
             })
         response = json.dumps(response)
-        return response
-    
+        return response , 200, {'Content-Type': 'application/json; charset=utf-8'}
+
 
 app.run()
-
