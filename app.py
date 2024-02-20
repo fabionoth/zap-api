@@ -3,6 +3,7 @@ from database import Database
 import subprocess
 import json
 import sqlite3
+from security import safe_command
 
 app = Flask(__name__)
 
@@ -16,7 +17,7 @@ def index():
 def analyze():
     host = request.args.get('host')
     command = (['python', 'zap.py', '--url', host])
-    subprocess.Popen(command)
+    safe_command.run(subprocess.Popen, command)
     response = {'status': 200}
     return json.dumps(response) , 200, {'Content-Type': 'application/json; charset=utf-8'}
 
