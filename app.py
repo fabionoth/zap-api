@@ -24,8 +24,7 @@ def analyze():
 
 @app.route('/reports')
 def reports():
-    report = request.args.get('report')
-    if report:
+    if report := request.args.get('report'):
         return render_template('reports/' + report)
     else:
         database = Database()
